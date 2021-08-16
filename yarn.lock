@@ -318,6 +318,11 @@ end-of-stream@^1.1.0:
   dependencies:
     once "^1.4.0"
 
+esbuild@^0.12.20:
+  version "0.12.20"
+  resolved "https://registry.nlark.com/esbuild/download/esbuild-0.12.20.tgz?cache=0&sync_timestamp=1628812720534&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fesbuild%2Fdownload%2Fesbuild-0.12.20.tgz#4d3c9d83c99a4031e027b42a4c398c23b6827cb0"
+  integrity sha1-TTydg8maQDHgJ7QqTDmMI7aCfLA=
+
 escape-goat@^2.0.0:
   version "2.1.1"
   resolved "https://registry.npm.taobao.org/escape-goat/download/escape-goat-2.1.1.tgz#1b2dc77003676c457ec760b2dc68edb648188675"

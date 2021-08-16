@@ -4,6 +4,7 @@
   },
   "type": "module",
   "devDependencies": {
+    "esbuild": "^0.12.20",
     "express": "^4.17.1",
     "nodemon": "^2.0.12"
   },
