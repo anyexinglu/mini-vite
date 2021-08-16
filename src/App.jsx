@@ -4,7 +4,7 @@ import Hello from "./hello";
 export default function App() {
   return (
     <div>
-      App111
+      App
       <Hello />
     </div>
   );

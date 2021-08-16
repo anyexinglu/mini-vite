@@ -1,11 +1,13 @@
 import express from "express";
 import fs from "fs";
-import { transform } from "esbuild";
 import { watch } from "chokidar";
 import { createWebSocketServer } from "./ws.js";
+import config from "./saber.config.js";
+
+const { plugins } = config;
 
 import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { dirname } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -32,9 +34,13 @@ app.get("*", async (req, res) => {
     }
     url = url.split("?")[0]; // 处理 /App.jsx?import&t=1629105298557 格式
     let content = fs.readFileSync("./src" + url, "utf-8");
-    content = injectReactRefresh(content, url);
-    content = rewriteImport(content);
-    content = await transformJSX(content);
+
+    for (const plugin of plugins) {
+      if (plugin.transform) {
+        content = await plugin.transform(content, url);
+      }
+    }
+
     res
       .status(200)
       .set({ "Content-Type": "application/javascript" })
@@ -62,49 +68,3 @@ watcher.on("change", file => {
     ],
   });
 });
-
-// 将 JSX 转化为 JS
-async function transformJSX(content) {
-  let result = await transform(content, {
-    loader: "jsx",
-  });
-  return result.code;
-}
-
-// 提取 `import React from "react"` 中的 react，修改为 /@modules/react
-function rewriteImport(content) {
-  let result = content.replace(/ from \"(.*)\"/g, ($0, $1) => {
-    if ($1.startsWith(".")) {
-      return $0;
-    } else {
-      return ` from "/@modules/${$1}"`;
-    }
-  });
-  return result;
-}
-
-// 在 JSX 组件中，注入 react-refresh 相关代码
-function injectReactRefresh(content, url) {
-  const filePath = join(__dirname, "src", url);
-  const matched = content.match(/export default function (.*)\(/);
-  const compName = matched && matched[1];
-  if (compName) {
-    const header = `import RefreshRuntime from "react-refresh";`;
-    const footer = `RefreshRuntime.register(
-      ${compName},
-      "${filePath} ${compName}"
-    );
-    if (!window.__vite_plugin_react_timeout) {
-      window.__vite_plugin_react_timeout = setTimeout(() => {
-        window.__vite_plugin_react_timeout = 0;
-        RefreshRuntime.performReactRefresh();
-      }, 30);
-    }`;
-    return `
-      ${header}
-      ${content}
-      ${footer}
-    `;
-  }
-  return content;
-}
