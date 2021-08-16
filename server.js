@@ -6,10 +6,10 @@ app.get("*", (req, res) => {
   if (url === "/") {
     const content = fs.readFileSync("./src/index.html"); // 返回 index.html 文件
     res.status(200).type("html").send(content);
-  } else if (url.includes(".js") || !url.includes(".")) {
+  } else if (url.includes(".jsx") || !url.includes(".")) {
     if (!url.includes(".")) {
       // js 文件，假设没有后缀 / 后缀含 .js 的都是 JS 文件
-      url += ".js";
+      url += ".jsx";
     }
     const content = fs.readFileSync("./src" + url);
     res
