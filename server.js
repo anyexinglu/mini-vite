@@ -1,8 +1,11 @@
 import express from "express";
 import fs from "fs";
+import path from "path";
 import { watch } from "chokidar";
 import { createWebSocketServer } from "./ws.js";
 import config from "./saber.config.js";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 
 const { plugins } = config;
 
@@ -13,16 +16,33 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+
+function nodeRequire(id) {
+  const mod = require(path.join(__dirname, id));
+  const defaultExport = mod.__esModule ? mod.default : mod;
+  // rollup-style default import interop for cjs
+  return new Proxy(mod, {
+    get(mod, prop) {
+      if (prop === "default") return defaultExport;
+      return mod[prop];
+    },
+  });
+}
+
 app.get("*", async (req, res) => {
   let { url } = req;
   if (url === "/") {
     const content = fs.readFileSync("./src/index.html"); // 返回 index.html 文件
-    res.status(200).type("html").send(content);
+    const { render } = await import("./src/App-server.jsx");
+    const appHtml = render(url, context);
+    const html = content.replace(`<!--app-html-->`, appHtml);
+    res.status(200).type("html").send(html);
   } else if (url.startsWith("/@modules/")) {
     // 针对 /@modules/xxx 开头的请求，提供 deps/xxx 文件
     const depName = url.replace("/@modules/", "");
     const content = fs.readFileSync(`./deps/${depName}.js`);
     // 返回 deps/xxx 文件
+
     res
       .status(200)
       .set({ "Content-Type": "application/javascript" })
